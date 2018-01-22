@@ -17,6 +17,11 @@ namespace SimpleUI
         List<UIMenu> _menuList = new List<UIMenu>();
         public UIMenu LastUsedMenu { get; set; }
 
+        /// <summary>
+        /// Disable this before editing the menu so that the pool will stop iterating over the menus and not crash.
+        /// </summary>
+        private static bool AllowMenuDraw = true;
+
         public List<UIMenu> UIMenuList
         {
             get { return _menuList; }
@@ -101,7 +106,7 @@ namespace SimpleUI
         /// </summary>
         public void Draw()
         {
-            foreach (var menu in _menuList.Where(menu => menu.IsVisible))
+            foreach (var menu in _menuList.Where(menu => menu.IsVisible).ToList())
             {
                 menu.Draw();
                 SetLastUsedMenu(menu);
@@ -121,6 +126,8 @@ namespace SimpleUI
         /// </summary>
         public void ProcessMenus()
         {
+            if (!AllowMenuDraw) return;
+
             if (LastUsedMenu == null)
             {
                 LastUsedMenu = _menuList[0];
@@ -135,6 +142,11 @@ namespace SimpleUI
         public bool IsAnyMenuOpen()
         {
             return _menuList.Any(menu => menu.IsVisible);
+        }
+
+        public bool IsMenuDrawAllowed()
+        {
+            return AllowMenuDraw;
         }
 
         /// <summary>
@@ -166,6 +178,7 @@ namespace SimpleUI
         }
     }
 
+    public delegate void ItemHighlightEvent(UIMenu sender, UIMenuItem selectedItem, int index);
     public delegate void ItemSelectEvent(UIMenu sender, UIMenuItem selectedItem, int index);
     public delegate void ItemLeftRightEvent(UIMenu sender, UIMenuItem selectedItem, int index, bool left);
 
@@ -173,21 +186,39 @@ namespace SimpleUI
     {
         public UIMenu ParentMenu { get; set; }
         public UIMenuItem ParentItem { get; set; }
-        public UIMenu NextMenu { get; set; }
-        public UIMenuItem BindingMenuItem { get; set; }
 
-        public int SelectedIndex = 0;
-        public bool IsVisible = false;
-        public string Title { get; set; }
         public UIMenuItem SelectedItem;
         protected List<UIMenuItem> _itemList = new List<UIMenuItem>();
         List<BindedItem> _bindedList = new List<BindedItem>();
-        public Dictionary<UIMenuItem, UIMenu> Binded { get; }
+
+        public int SelectedIndex = 0;
+
+        private bool _visible = false;
+        public bool IsVisible
+        {
+            get { return _visible; }
+            set
+            {
+                if (value && !_visible)
+                {
+                    SaveIndexPositionFromOutOfBounds();
+                }
+
+                _visible = value;
+            }
+        }
+
+        public string Title { get; set; }
 
         DateTime InputTimer;
         static int InputWait = 80;
 
         public bool UseEventBasedControls = true;
+
+        /// <summary>
+        /// Called while item is highlighted/hovered over.
+        /// </summary>
+        public event ItemHighlightEvent WhileItemHighlight;
 
         /// <summary>
         /// Called when user selects a simple item.
@@ -339,6 +370,14 @@ namespace SimpleUI
             MaxItemsInMenu(MaxItemsOnScreen);
         }
 
+        public void SaveIndexPositionFromOutOfBounds()
+        {
+            if (SelectedIndex >= _itemList.Count)
+            {
+                ResetIndexPosition();
+            }
+        }
+
         public void SetIndexPosition(int indexPosition)
         {
             SelectedIndex = indexPosition;
@@ -365,10 +404,6 @@ namespace SimpleUI
         {
             submenu.ParentMenu = this;
             submenu.ParentItem = itemToBindTo;
-            /*if (Binded.ContainsKey(itemToBindTo))
-                Binded[itemToBindTo] = submenu;
-            else
-                Binded.Add(itemToBindTo, submenu);*/
             _bindedList.Add(new BindedItem { BindedSubmenu = submenu, BindedItemToSubmenu = itemToBindTo });
         }
 
@@ -376,6 +411,12 @@ namespace SimpleUI
         {
             get { return _itemList; }
             set { _itemList = value; }
+        }
+
+        public List<BindedItem> BindedList
+        {
+            get { return _bindedList; }
+            set { _bindedList = value; }
         }
 
         public virtual void Draw()
@@ -446,6 +487,8 @@ namespace SimpleUI
                         ItemLeftRight(SelectedItem, SelectedIndex, false);
                         InputTimer = DateTime.Now.AddMilliseconds(InputWait);
                     }
+
+                    ItemHighlight(SelectedItem, SelectedIndex);
                 }
             }
         }
@@ -1172,6 +1215,11 @@ namespace SimpleUI
             return numberToControl;
         }
 
+        protected virtual void ItemHighlight(UIMenuItem selecteditem, int index)
+        {
+            WhileItemHighlight?.Invoke(this, selecteditem, index);
+        }
+
         protected virtual void ItemSelect(UIMenuItem selecteditem, int index)
         {
             OnItemSelect?.Invoke(this, selecteditem, index);
@@ -1180,6 +1228,38 @@ namespace SimpleUI
         protected virtual void ItemLeftRight(UIMenuItem selecteditem, int index, bool left)
         {
             OnItemLeftRight?.Invoke(this, selecteditem, index, left);
+        }
+
+        public void UnsubscribeAll_OnItemSelect()
+        {
+            OnItemSelect = null;
+            //OnItemSelect = delegate { }; // Causes more overhead
+        }
+
+        public void UnsubscribeAll_OnItemLeftRight()
+        {
+            OnItemLeftRight = null;
+            //OnItemLeftRight = delegate { }; // Causes more overhead
+        }
+
+        public void UnsubscribeAll_WhileItemHighlight()
+        {
+            WhileItemHighlight = null;
+            //WhileItemHighlight = delegate { }; // Causes more overhead
+        }
+
+        public void Dispose()
+        {
+            UnsubscribeAll_OnItemSelect();
+            UnsubscribeAll_OnItemLeftRight();
+            UnsubscribeAll_WhileItemHighlight();
+
+            ParentMenu = null;
+            ParentItem = null;
+
+            SelectedItem = null;
+            _itemList.Clear();
+            _bindedList.Clear();
         }
     }
 
@@ -1376,7 +1456,7 @@ namespace SimpleUI
         }
     }*/
 
-    class BindedItem
+    public class BindedItem
     {
         private UIMenu _menu;
         private UIMenuItem _item;
