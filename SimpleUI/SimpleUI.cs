@@ -204,6 +204,7 @@ namespace SimpleUI
         public UIMenuItem SelectedItem;
         protected List<UIMenuItem> _itemList = new List<UIMenuItem>();
         List<BindedItem> _bindedList = new List<BindedItem>();
+        List<UIMenuItem> _disabledItems = new List<UIMenuItem>();
 
         public int SelectedIndex = 0;
 
@@ -415,6 +416,7 @@ namespace SimpleUI
         public void AddMenuItem(UIMenuItem item)
         {
             _itemList.Add(item);
+            item.PersistentIndex = _itemList.IndexOf(item);
         }
 
         public void BindItemToSubmenu(UIMenu submenu, UIMenuItem itemToBindTo)
@@ -434,6 +436,12 @@ namespace SimpleUI
         {
             get { return _bindedList; }
             set { _bindedList = value; }
+        }
+
+        public List<UIMenuItem> DisabledList
+        {
+            get { return _disabledItems; }
+            set { _disabledItems = value; }
         }
 
         public virtual void Draw()
@@ -723,6 +731,38 @@ namespace SimpleUI
             {
                 InputTimer = DateTime.Now.AddMilliseconds(InputWait);
             }
+        }
+
+        public void DisableItem(UIMenuItem itemToDisable)
+        {
+            if (_itemList.Contains(itemToDisable))
+            {
+                _disabledItems.Add(itemToDisable);
+                _itemList.Remove(itemToDisable);
+            }
+        }
+
+        public void ReenableItem(UIMenuItem itemToEnable)
+        {
+            if (_disabledItems.Contains(itemToEnable))
+            {
+                //_itemList.Insert(itemToEnable.PersistentIndex, itemToEnable);
+                _itemList.Add(itemToEnable);
+                SortMenuItemsByOriginalOrder();
+                _disabledItems.Remove(itemToEnable);
+            }
+        }
+
+        public void ReenableAllItems()
+        {
+            _disabledItems.ForEach(d => _itemList.Add(d));
+            SortMenuItemsByOriginalOrder();
+            _disabledItems.Clear();
+        }
+
+        public void SortMenuItemsByOriginalOrder()
+        {
+            _itemList.Sort((x, y) => x.PersistentIndex.CompareTo(y.PersistentIndex));
         }
 
         List<Control> ControlsToEnable = new List<Control>
@@ -1292,12 +1332,12 @@ namespace SimpleUI
 
     public class UIMenuItem
     {
-        string _text;
-        dynamic _value;
-        string _description;
+        private string _text;
+        private dynamic _value;
+        private string _description;
         //public List<string> DescriptionTexts;
         public float DescriptionWidth { get; set; }
-        bool _enabled;
+        private int _persistentIndex;
 
         public UIMenuItem(string text)
         {
@@ -1347,10 +1387,10 @@ namespace SimpleUI
             }
         }
 
-        public bool Enabled
+        public int PersistentIndex
         {
-            get { return _enabled; }
-            set { _enabled = value; }
+            get { return _persistentIndex; }
+            set { _persistentIndex = value; }
         }
 
         public virtual void Draw(UIMenu sourceMenu)
