@@ -161,7 +161,7 @@ namespace SimpleUI
         /// </summary>
         public void CloseAllMenus()
         {
-            foreach (var menu in _menuList.Where(menu => menu.IsVisible))
+            foreach (var menu in _menuList.Where(menu => menu.IsVisible).ToList())
             {
                 menu.IsVisible = false;
             }
@@ -390,26 +390,24 @@ namespace SimpleUI
 
         public void SaveIndexPositionFromOutOfBounds()
         {
-            if (SelectedIndex >= _itemList.Count)
-            {
-                ResetIndexPosition();
-            }
+            SetIndexPosition(SelectedIndex >= _itemList.Count ? _itemList.Count - 1 : SelectedIndex);
         }
 
         public void SetIndexPosition(int indexPosition)
         {
+            if (indexPosition >= _itemList.Count) return;
+
             SelectedIndex = indexPosition;
 
-            if (SelectedIndex >= MaxItemsOnScreen)
-            {
-                //int possibleMin = SelectedIndex - MaxItemsOnScreen;
-                minItem = SelectedIndex - MaxItemsOnScreen;
-                maxItem = SelectedIndex;
-            }
-            else
+            if (SelectedIndex < MaxItemsOnScreen)
             {
                 minItem = 0;
                 maxItem = MaxItemsOnScreen - 1;
+            }
+            else
+            {
+                maxItem = SelectedIndex;
+                minItem = SelectedIndex - (MaxItemsOnScreen - 1);
             }
         }
 
@@ -448,6 +446,12 @@ namespace SimpleUI
         {
             if (IsVisible)
             {
+                /*UI.ShowSubtitle("selectedIndex: " + SelectedIndex
+                    + "\nminItem: " + minItem
+                    + "\nmaxItem: " + maxItem
+                    + "\nitemListCount: " + _itemList.Count
+                    , 1);*/
+
                 DisplayMenu();
                 DisableControls();
                 DrawScrollBar();
@@ -739,6 +743,7 @@ namespace SimpleUI
             {
                 _disabledItems.Add(itemToDisable);
                 _itemList.Remove(itemToDisable);
+                SaveIndexPositionFromOutOfBounds();
             }
         }
 
@@ -750,6 +755,7 @@ namespace SimpleUI
                 _itemList.Add(itemToEnable);
                 SortMenuItemsByOriginalOrder();
                 _disabledItems.Remove(itemToEnable);
+                SaveIndexPositionFromOutOfBounds();
             }
         }
 
@@ -758,6 +764,7 @@ namespace SimpleUI
             _disabledItems.ForEach(d => _itemList.Add(d));
             SortMenuItemsByOriginalOrder();
             _disabledItems.Clear();
+            SaveIndexPositionFromOutOfBounds();
         }
 
         public void SortMenuItemsByOriginalOrder()
