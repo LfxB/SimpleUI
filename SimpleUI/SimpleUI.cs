@@ -421,6 +421,7 @@ namespace SimpleUI
         {
             submenu.ParentMenu = this;
             submenu.ParentItem = itemToBindTo;
+            itemToBindTo.SubmenuWithin = submenu;
             _bindedList.Add(new BindedItem { BindedSubmenu = submenu, BindedItemToSubmenu = itemToBindTo });
         }
 
@@ -753,7 +754,7 @@ namespace SimpleUI
             {
                 //_itemList.Insert(itemToEnable.PersistentIndex, itemToEnable);
                 _itemList.Add(itemToEnable);
-                SortMenuItemsByOriginalOrder();
+                //SortMenuItemsByOriginalOrder();
                 _disabledItems.Remove(itemToEnable);
                 SaveIndexPositionFromOutOfBounds();
             }
@@ -762,9 +763,14 @@ namespace SimpleUI
         public void ReenableAllItems()
         {
             _disabledItems.ForEach(d => _itemList.Add(d));
-            SortMenuItemsByOriginalOrder();
+            //SortMenuItemsByOriginalOrder();
             _disabledItems.Clear();
             SaveIndexPositionFromOutOfBounds();
+        }
+
+        public void ResetOriginalOrder()
+        {
+            _itemList.ForEach(i => i.PersistentIndex = _itemList.IndexOf(i));
         }
 
         public void SortMenuItemsByOriginalOrder()
@@ -1269,7 +1275,19 @@ namespace SimpleUI
             ParentItem = null;
 
             SelectedItem = null;
+
+            foreach (var item in _itemList.ToList())
+            {
+                item.Dispose();
+            }
             _itemList.Clear();
+
+            foreach (var item in _disabledItems.ToList())
+            {
+                item.Dispose();
+            }
+            _disabledItems.Clear();
+
             _bindedList.Clear();
         }
     }
@@ -1345,6 +1363,7 @@ namespace SimpleUI
         //public List<string> DescriptionTexts;
         public float DescriptionWidth { get; set; }
         private int _persistentIndex;
+        private UIMenu _submenuWithin;
 
         public UIMenuItem(string text)
         {
@@ -1398,6 +1417,15 @@ namespace SimpleUI
         {
             get { return _persistentIndex; }
             set { _persistentIndex = value; }
+        }
+
+        /// <summary>
+        /// The Submenu which this UIMenuItem leads to, if any.
+        /// </summary>
+        public UIMenu SubmenuWithin
+        {
+            get { return _submenuWithin; }
+            set { _submenuWithin = value; }
         }
 
         public virtual void Draw(UIMenu sourceMenu)
@@ -1456,6 +1484,11 @@ namespace SimpleUI
         }
 
         public virtual void ChangeListIndex() { }
+
+        public void Dispose()
+        {
+            _submenuWithin = null;
+        }
     }
 
     public class UIMenuNumberValueItem : UIMenuItem
