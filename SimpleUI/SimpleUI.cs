@@ -12,7 +12,7 @@ using Control = GTA.Control;
 
 namespace SimpleUI
 {
-    class MenuPool
+    public class MenuPool
     {
         List<UIMenu> _menuList = new List<UIMenu>();
         public UIMenu LastUsedMenu { get; set; }
@@ -24,6 +24,8 @@ namespace SimpleUI
 
         /// <summary>
         /// Additional text displayed on the right side of a Submenu's parent item.
+        /// <para>Default is "  ~r~>" (with two spaces in front)</para>
+        /// <para>Colour codes: https://pastebin.com/nqNYWMSB </para>
         /// </summary>
         public string SubmenuItemIndication = "  ~r~>";
 
@@ -41,6 +43,7 @@ namespace SimpleUI
 
         /// <summary>
         /// Adds a submenu to a parent menu and to the MenuPool. Returns UIMenuItem that links the parent menu to the submenu.
+        /// <para><see cref="SubmenuItemIndication"/> will be added to the end of the item text.</para>
         /// </summary>
         /// <param name="SubMenu">The submenu</param>
         /// <param name="ParentMenu">The parent menu.</param>
@@ -50,7 +53,7 @@ namespace SimpleUI
             AddMenu(SubMenu);
             /*SubMenu.ParentMenu = ParentMenu;
             ParentMenu.NextMenu = SubMenu;*/
-            var item = new UIMenuItem(text + SubmenuItemIndication); //colour codes: gtaforums.com/topic/820813-displaying-help-text/?p=1067993556
+            var item = new UIMenuItem(text + SubmenuItemIndication); //colour codes: https://pastebin.com/nqNYWMSB
             //ParentMenu.BindingMenuItem = BindingItem;
             ParentMenu.AddMenuItem(item);
             //ParentMenu.BindingMenuItem = item;
@@ -64,6 +67,7 @@ namespace SimpleUI
 
         /// <summary>
         /// Adds a submenu to a parent menu and to the MenuPool. Returns UIMenuItem that links the parent menu to the submenu.
+        /// <para><see cref="SubmenuItemIndication"/> will be added to the end of the item text.</para>
         /// </summary>
         /// <param name="SubMenu">The submenu</param>
         /// <param name="ParentMenu">The parent menu.</param>
@@ -224,9 +228,6 @@ namespace SimpleUI
         }
 
         public string Title { get; set; }
-
-        DateTime InputTimer;
-        static int InputWait = 80;
 
         public bool UseEventBasedControls = true;
 
@@ -473,14 +474,14 @@ namespace SimpleUI
                         {
                             bind.BindedSubmenu.IsVisible = true;
                             //bind.BindedSubmenu.AcceptPressed = false;
-                            bind.BindedSubmenu.InputTimer = DateTime.Now.AddMilliseconds(350);
+                            //bind.BindedSubmenu.InputTimer = DateTime.Now.AddMilliseconds(350);
                         }
 
                         if (UseEventBasedControls)
                         {
                             ItemSelect(SelectedItem, SelectedIndex);
                         }
-                        InputTimer = DateTime.Now.AddMilliseconds(350);
+                        UIInput.InputTimer = DateTime.Now.AddMilliseconds(350);
                     }
                 }
 
@@ -492,11 +493,11 @@ namespace SimpleUI
                     {
                         ParentMenu.IsVisible = true;
                         //ParentMenu.CancelPressed = false;
-                        ParentMenu.InputTimer = DateTime.Now.AddMilliseconds(350);
+                        //ParentMenu.InputTimer = DateTime.Now.AddMilliseconds(350);
                     }
 
                     //CancelPressed = false;
-                    InputTimer = DateTime.Now.AddMilliseconds(350);
+                    UIInput.InputTimer = DateTime.Now.AddMilliseconds(350);
                     //return;
                 }
 
@@ -505,20 +506,20 @@ namespace SimpleUI
                     if (JustPressedAccept())
                     {
                         ItemSelect(SelectedItem, SelectedIndex);
-                        InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                        UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
                         //AcceptPressed = false;
                     }
 
                     if (JustPressedLeft())
                     {
                         ItemLeftRight(SelectedItem, SelectedIndex, true);
-                        InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                        UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
                     }
 
                     if (JustPressedRight())
                     {
                         ItemLeftRight(SelectedItem, SelectedIndex, false);
-                        InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                        UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
                     }
 
                     ItemHighlight(SelectedItem, SelectedIndex);
@@ -696,11 +697,11 @@ namespace SimpleUI
 
             if (IsHoldingSpeedupControl())
             {
-                InputTimer = DateTime.Now.AddMilliseconds(20);
+                UIInput.InputTimer = DateTime.Now.AddMilliseconds(20);
             }
             else
             {
-                InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
             }
         }
 
@@ -730,11 +731,11 @@ namespace SimpleUI
 
             if (IsHoldingSpeedupControl())
             {
-                InputTimer = DateTime.Now.AddMilliseconds(20);
+                UIInput.InputTimer = DateTime.Now.AddMilliseconds(20);
             }
             else
             {
-                InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
             }
         }
 
@@ -848,7 +849,7 @@ namespace SimpleUI
         {
             if (IsHoldingUp())
             {
-                if (InputTimer < DateTime.Now)
+                if (UIInput.InputTimer < DateTime.Now)
                 {
                     Game.PlaySound(AUDIO_UPDOWN, AUDIO_LIBRARY);
                     return true;
@@ -866,7 +867,7 @@ namespace SimpleUI
         {
             if (IsHoldingDown())
             {
-                if (InputTimer < DateTime.Now)
+                if (UIInput.InputTimer < DateTime.Now)
                 {
                     Game.PlaySound(AUDIO_UPDOWN, AUDIO_LIBRARY);
                     return true;
@@ -879,7 +880,7 @@ namespace SimpleUI
         {
             if ((IsGamepad() && Game.IsControlPressed(2, Control.PhoneLeft)) || Game.IsKeyPressed(Keys.NumPad4) || Game.IsKeyPressed(Keys.Left))
             {
-                if (InputTimer < DateTime.Now)
+                if (UIInput.InputTimer < DateTime.Now)
                 {
                     Game.PlaySound(AUDIO_LEFTRIGHT, AUDIO_LIBRARY);
                     return true;
@@ -892,7 +893,7 @@ namespace SimpleUI
         {
             if ((IsGamepad() && Game.IsControlPressed(2, Control.PhoneRight)) || Game.IsKeyPressed(Keys.NumPad6) || Game.IsKeyPressed(Keys.Right))
             {
-                if (InputTimer < DateTime.Now)
+                if (UIInput.InputTimer < DateTime.Now)
                 {
                     Game.PlaySound(AUDIO_LEFTRIGHT, AUDIO_LIBRARY);
                     return true;
@@ -927,7 +928,7 @@ namespace SimpleUI
         {
             if (Game.IsControlPressed(2, Control.PhoneSelect) || Game.IsKeyPressed(Keys.NumPad5) || Game.IsKeyPressed(Keys.Enter))
             {
-                if (InputTimer < DateTime.Now)
+                if (UIInput.InputTimer < DateTime.Now)
                 {
                     Game.PlaySound(AUDIO_SELECT, AUDIO_LIBRARY);
                     //InputTimer = Game.GameTime + 350;
@@ -941,7 +942,7 @@ namespace SimpleUI
         {
             if (Game.IsControlPressed(2, Control.PhoneCancel) || Game.IsKeyPressed(Keys.NumPad0) || Game.IsKeyPressed(Keys.Back))
             {
-                if (InputTimer < DateTime.Now)
+                if (UIInput.InputTimer < DateTime.Now)
                 {
                     Game.PlaySound(AUDIO_BACK, AUDIO_LIBRARY);
                     //InputTimer = Game.GameTime + InputWait;
@@ -965,23 +966,21 @@ namespace SimpleUI
 
         public void SetInputWait(int ms = 350)
         {
-            InputTimer = DateTime.Now.AddMilliseconds(ms);
+            UIInput.InputTimer = DateTime.Now.AddMilliseconds(ms);
         }
 
-        public bool ControlBoolValue(UIMenuItem item, bool boolToControl)
+        /// <summary>
+        /// Control a bool easily inside a <see cref="OnItemSelect"/> event
+        /// </summary>
+        /// <param name="boolToControl">The bool to control</param>
+        /// <param name="controllingItem">The item that controls this bool</param>
+        public void ControlBoolValue(ref bool boolToControl, UIMenuItem controllingItem)
         {
-            if (IsVisible && SelectedItem == item)
+            if (IsVisible && SelectedItem == controllingItem)
             {
-                //if (JustPressedAccept())
-                //{
                 boolToControl = !boolToControl;
-                item.Value = boolToControl;
-                //InputTimer = DateTime.Now.AddMilliseconds(InputWait);
-                return boolToControl;
-                //}
             }
-            item.Value = boolToControl;
-            return boolToControl;
+            controllingItem.Value = boolToControl;
         }
 
         public bool ControlBoolValue_NoEvent(UIMenuItem item, bool boolToControl)
@@ -994,59 +993,67 @@ namespace SimpleUI
                 {
                     boolToControl = !boolToControl;
                     item.Value = boolToControl;
-                    InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                    UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
                     return boolToControl;
                 }
             }
             return boolToControl;
         }
 
-        public float ControlFloatValue(UIMenuItem item, bool left, float numberToControl, float incrementValue, float incrementValueFast, int decimals = 2, bool limit = false, float min = 0f, float max = 1f)
+        /// <summary>
+        /// Control a float easily inside a <see cref="OnItemLeftRight"/> event
+        /// </summary>
+        /// <param name="numberToControl">The float to control</param>
+        /// <param name="controllingItem">The item that controls this float</param>
+        /// <param name="left">The direction given by the <see cref="OnItemLeftRight"/> event</param>
+        /// <param name="incrementValue">How many units you want to add/subtract when left/right is pressed</param>
+        /// <param name="incrementValueFast">Same as incrementValue, but when holding SHIFT or the R1/RB gamepad button</param>
+        /// <param name="decimals">How many decimals to round to</param>
+        /// <param name="limit">Set whether you'd like to limit how high/low this float can go</param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        public void ControlFloatValue(ref float numberToControl, UIMenuItem controllingItem, bool left, float incrementValue, float incrementValueFast, int decimals = 2, bool limit = false, float min = 0f, float max = 1f)
         {
-            if (IsVisible && SelectedItem == item)
+            if (IsVisible && SelectedItem == controllingItem)
             {
+                float temp = numberToControl;
                 if (left)
                 {
                     if (IsHoldingSpeedupControl())
                     {
-                        numberToControl -= incrementValueFast;
+                        temp -= incrementValueFast;
                     }
                     else
                     {
-                        numberToControl -= incrementValue;
+                        temp -= incrementValue;
                     }
                 }
                 if (!left)
                 {
                     if (IsHoldingSpeedupControl())
                     {
-                        numberToControl += incrementValueFast;
+                        temp += incrementValueFast;
                     }
                     else
                     {
-                        numberToControl += incrementValue;
+                        temp += incrementValue;
                     }
                 }
                 if (limit)
                 {
-                    if (numberToControl < min)
+                    if (temp < min)
                     {
-                        numberToControl = min;
+                        temp = min;
                     }
-                    if (numberToControl > max)
+                    else if (temp > max)
                     {
-                        numberToControl = max;
+                        temp = max;
                     }
                 }
 
-                item.Value = "< " + numberToControl + " >";
-
-                //InputTimer = DateTime.Now.AddMilliseconds(InputWait);
-
-                return (float)Math.Round(numberToControl, decimals);
+                numberToControl = (float)Math.Round(temp, decimals);
             }
-            item.Value = "< " + numberToControl + " >";
-            return numberToControl;
+            controllingItem.Value = "< " + numberToControl + " >";
         }
 
         public float ControlFloatValue_NoEvent(UIMenuItem item, float numberToControl, float incrementValue, float incrementValueFast, int decimals = 2, bool limit = false, float min = 0f, float max = 1f)
@@ -1080,7 +1087,7 @@ namespace SimpleUI
 
                     item.Value = "< " + numberToControl + " >";
 
-                    InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                    UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
 
                     return (float)Math.Round(numberToControl, decimals);
                 }
@@ -1109,7 +1116,7 @@ namespace SimpleUI
 
                     item.Value = "< " + numberToControl + " >";
 
-                    InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                    UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
 
                     return (float)Math.Round(numberToControl, decimals);
                 }
@@ -1117,51 +1124,60 @@ namespace SimpleUI
             return numberToControl;
         }
 
-        public int ControlIntValue(UIMenuItem item, bool left, int numberToControl, int incrementValue, int incrementValueFast, bool limit = false, int min = 0, int max = 100)
+        /// <summary>
+        /// Control an integer easily inside a <see cref="OnItemLeftRight"/> event
+        /// </summary>
+        /// <param name="numberToControl">The int to control</param>
+        /// <param name="controllingItem">The item that controls this int</param>
+        /// <param name="left">The direction given by the <see cref="OnItemLeftRight"/> event</param>
+        /// <param name="incrementValue">How many units you want to add/subtract when left/right is pressed</param>
+        /// <param name="incrementValueFast">Same as incrementValue, but when holding SHIFT or the R1/RB gamepad button</param>
+        /// <param name="limit">Set whether you'd like to limit how high/low this int can go</param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        public void ControlIntValue(ref int numberToControl, UIMenuItem controllingItem, bool left, int incrementValue, int incrementValueFast, bool limit = false, int min = 0, int max = 100)
         {
-            if (IsVisible && SelectedItem == item)
+            if (IsVisible && SelectedItem == controllingItem)
             {
+                int temp = numberToControl;
                 if (left)
                 {
                     if (IsHoldingSpeedupControl())
                     {
-                        numberToControl -= incrementValueFast;
+                        temp -= incrementValueFast;
                     }
                     else
                     {
-                        numberToControl -= incrementValue;
+                        temp -= incrementValue;
                     }
                 }
                 if (!left)
                 {
                     if (IsHoldingSpeedupControl())
                     {
-                        numberToControl += incrementValueFast;
+                        temp += incrementValueFast;
                     }
                     else
                     {
-                        numberToControl += incrementValue;
+                        temp += incrementValue;
                     }
                 }
                 if (limit)
                 {
-                    if (numberToControl < min)
+                    if (temp < min)
                     {
-                        numberToControl = min;
+                        temp = min;
                     }
-                    else if (numberToControl > max)
+                    else if (temp > max)
                     {
-                        numberToControl = max;
+                        temp = max;
                     }
                 }
 
-                item.Value = "< " + numberToControl + " >";
-
-                //InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                numberToControl = temp;
 
             }
-            item.Value = "< " + numberToControl + " >";
-            return numberToControl;
+            controllingItem.Value = "< " + numberToControl + " >";
         }
 
         public int ControlIntValue_NoEvent(UIMenuItem item, int numberToControl, int incrementValue, int incrementValueFast, bool limit = false, int min = 0, int max = 100)
@@ -1195,7 +1211,7 @@ namespace SimpleUI
 
                     item.Value = "< " + numberToControl + " >";
 
-                    InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                    UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
 
                     return numberToControl;
                 }
@@ -1224,12 +1240,29 @@ namespace SimpleUI
 
                     item.Value = "< " + numberToControl + " >";
 
-                    InputTimer = DateTime.Now.AddMilliseconds(InputWait);
+                    UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
 
                     return numberToControl;
                 }
             }
             return numberToControl;
+        }
+
+        /// <summary>
+        /// Control an Enum easily inside a <see cref="OnItemLeftRight"/> event
+        /// </summary>
+        /// <typeparam name="T">Must be an Enum</typeparam>
+        /// <param name="enumToControl">The Enum to control</param>
+        /// <param name="controllingItem">The item that controls this enum</param>
+        /// <param name="left">The direction given by the <see cref="OnItemLeftRight"/> event</param>
+        public void ControlEnumValue<T>(ref T enumToControl, UIMenuItem controllingItem, bool left) where T : struct
+        {
+            if (IsVisible && SelectedItem == controllingItem)
+            {
+                enumToControl = left ? enumToControl.Previous() : enumToControl.Next();
+            }
+
+            controllingItem.Value = "< " + enumToControl.ToString() + " >";
         }
 
         protected virtual void ItemHighlight(UIMenuItem selecteditem, int index)
@@ -1641,6 +1674,12 @@ namespace SimpleUI
         }
     }
 
+    internal static class UIInput
+    {
+        internal static DateTime InputTimer;
+        internal static int InputWait = 80;
+    }
+
     /*public static class SplitStringByLength
     {
         public static IEnumerable<string> SplitByLength(this string str, int maxLength)
@@ -1680,6 +1719,26 @@ namespace SimpleUI
                              .ToList();
             }
             return lines;
+        }
+    }
+
+    public static class EnumExtensions
+    {
+        public static T Next<T>(this T src) where T : struct
+        {
+            //if (!typeof(T).IsEnum) throw new ArgumentException(String.Format("Argumnent {0} is not an Enum", typeof(T).FullName));
+
+            T[] Arr = (T[])Enum.GetValues(src.GetType());
+            int j = Array.IndexOf<T>(Arr, src) + 1;
+            return (Arr.Length == j) ? Arr[0] : Arr[j];
+        }
+        public static T Previous<T>(this T src) where T : struct
+        {
+            //if (!typeof(T).IsEnum) throw new ArgumentException(String.Format("Argumnent {0} is not an Enum", typeof(T).FullName));
+
+            T[] Arr = (T[])Enum.GetValues(src.GetType());
+            int j = Array.IndexOf<T>(Arr, src) - 1;
+            return (j < 0) ? Arr[Arr.Length - 1] : Arr[j];
         }
     }
 }
