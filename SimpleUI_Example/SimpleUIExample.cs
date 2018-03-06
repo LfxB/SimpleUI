@@ -2,6 +2,7 @@
 using GTA.Native;
 using System;
 using System.Windows.Forms;
+using System.Collections.Generic;
 using System.Drawing;
 using SimpleUI;
 
@@ -20,20 +21,38 @@ namespace SimpleUIExample
         UIMenu mainMenu;
         UIMenu subMenu;
 
+        UIMenuItem itemSelectFunction;
+        UIMenuItem itemBoolControl;
         UIMenuSubsectionItem subsectionItem;
         UIMenuNumberValueItem itemIntegerControl;
         UIMenuNumberValueItem itemFloatControl;
         UIMenuNumberValueItem itemEnumControl;
-        UIMenuItem itemBoolControl;
-        UIMenuItem itemSelectFunction;
+        UIMenuSubsectionItem subsectionItem2;
+        UIMenuListItem itemListControl;
+        UIMenuListItem itemListControlAdvanced;
+        UIMenuItem itemAddPerson;
+        UIMenuItem itemRemoveLastPerson;
 
         UIMenuItem submenuItem1;
         UIMenuItem submenuItem2;
 
+        bool testBool;
         int testInt;
         float testFloat;
         TestEnum testEnum = TestEnum.enum1;
-        bool testBool;
+        List<dynamic> testListString = new List<dynamic>()
+        {
+            "List Item 1",
+            "List Item 2",
+            "List Item 3",
+            "List Item 4"
+        };
+        List<dynamic> testListAdvanced = new List<dynamic>()
+        {
+            new Person("Michael", "Scott", 8008),
+            new Person("Dwight", "Schrute", 1337),
+            new Person("Stanley", "Hudson", 101)
+        };
 
         public SimpleUIExample()
         {
@@ -110,6 +129,13 @@ namespace SimpleUIExample
             // of the menu.
             // UIMenuNumberValueItem is just like UIMenuItem but with "<" and ">"
             // wrapped around the value.
+
+            itemSelectFunction = new UIMenuItem("Select me!", null, "Select me to show a subtitle.");
+            mainMenu.AddMenuItem(itemSelectFunction);
+
+            itemBoolControl = new UIMenuItem("Bool Item", testBool, "This item controls a bool.");
+            mainMenu.AddMenuItem(itemBoolControl);
+
             itemIntegerControl = new UIMenuNumberValueItem("Integer Item", testInt, "This item controls an integer.");
             mainMenu.AddMenuItem(itemIntegerControl);
 
@@ -119,11 +145,22 @@ namespace SimpleUIExample
             itemEnumControl = new UIMenuNumberValueItem("Enum Item", testEnum, "This item controls an enum.");
             mainMenu.AddMenuItem(itemEnumControl);
 
-            itemBoolControl = new UIMenuItem("Bool Item", testBool, "This item controls a bool.");
-            mainMenu.AddMenuItem(itemBoolControl);
+            subsectionItem2 = new UIMenuSubsectionItem("--- List Stuff ---");
+            mainMenu.AddMenuItem(subsectionItem2);
 
-            itemSelectFunction = new UIMenuItem("Select me!", null, "Select me to show a subtitle.");
-            mainMenu.AddMenuItem(itemSelectFunction);
+            // the 3rd param must be of type List<dynamic>
+            // or you will get a compile time error.
+            itemListControl = new UIMenuListItem("List Item", "This item can output an object from a list.", testListString);
+            mainMenu.AddMenuItem(itemListControl);
+
+            itemListControlAdvanced = new UIMenuListItem("People", "A list of people", testListAdvanced);
+            mainMenu.AddMenuItem(itemListControlAdvanced);
+
+            itemAddPerson = new UIMenuItem("Add a person");
+            mainMenu.AddMenuItem(itemAddPerson);
+
+            itemRemoveLastPerson = new UIMenuItem("Remove last person");
+            mainMenu.AddMenuItem(itemRemoveLastPerson);
 
             // Now let's create some events.
             // All events are in the UIMenu class.
@@ -135,7 +172,11 @@ namespace SimpleUIExample
             mainMenu.OnItemSelect += (sender, selectedItem, index) =>
             {
                 // Check which item is selected.
-                if (selectedItem == itemBoolControl)
+                if (selectedItem == itemSelectFunction)
+                {
+                    UI.ShowSubtitle("Hi! I'm testing SimpleUI's OnItemSelect event!");
+                }
+                else if (selectedItem == itemBoolControl)
                 {
                     // ControlBoolValue is an easy way to let a menu item control
                     // a specific bool with one line of code.
@@ -143,9 +184,45 @@ namespace SimpleUIExample
                     // the "itemBoolControl" menu item.
                     mainMenu.ControlBoolValue(ref testBool, itemBoolControl);
                 }
-                else if (selectedItem == itemSelectFunction)
+                else if (selectedItem == itemAddPerson)
                 {
-                    UI.ShowSubtitle("Hi! I'm testing SimpleUI's OnItemSelect event!");
+                    string fname = Game.GetUserInput("FirstName", 999);
+                    if (String.IsNullOrWhiteSpace(fname)) return;
+
+                    string lname = Game.GetUserInput("LastName", 999);
+                    if (String.IsNullOrWhiteSpace(lname)) return;
+
+                    string input = Game.GetUserInput("ID", 999);
+                    if (String.IsNullOrWhiteSpace(lname)) return;
+
+                    int id;
+                    bool idParsed = int.TryParse(input, out id);
+
+                    if (!idParsed) return;
+
+                    testListAdvanced.Add(new Person(fname, lname, id));
+
+                    // Call this after modifying your list or you may
+                    // get an out of bounds error.
+                    itemListControlAdvanced.SaveListUpdateFromOutOfBounds();
+
+                    UI.ShowSubtitle(fname + " " + lname + " added to list!");
+                }
+                else if (selectedItem == itemRemoveLastPerson)
+                {
+                    if (testListAdvanced.Count > 1)
+                    {
+                        UI.ShowSubtitle(testListAdvanced[testListAdvanced.Count - 1].ToString() + " removed from list!");
+
+                        // Don't want to use LINQ for just this one line..
+                        testListAdvanced.RemoveAt(testListAdvanced.Count - 1);
+
+                        itemListControlAdvanced.SaveListUpdateFromOutOfBounds();
+                    }
+                    else
+                    {
+                        UI.ShowSubtitle("There is only one person left!");
+                    }
                 }
             };
 
@@ -213,6 +290,18 @@ namespace SimpleUIExample
 
                 UI.ShowSubtitle("You pressed " + (left ? "Left" : "Right") + " while highlighting Enum Item!");
             }
+            else if (selectedItem == itemListControl)
+            {
+                // An item of type UIMenuListItem is automatically controlled by the menu.
+                UI.ShowSubtitle("\"" + itemListControl.CurrentListItem.ToString() + "\" is selected.");
+            }
+            else if (selectedItem == itemListControlAdvanced)
+            {
+                // UIMenuListItem.CurrentListItem will return the actual selected object
+                // in the list. You must cast it to the actual object type. Ex:
+                // Person p = (Person)list.CurrentListItem;
+                UI.ShowSubtitle("\"" + itemListControlAdvanced.CurrentListItem.ToString() + "\" is selected.");
+            }
         }
 
         void OnTick(object sender, EventArgs e)
@@ -228,6 +317,28 @@ namespace SimpleUIExample
                 // Open / close the menu with the K key.
                 _menuPool.OpenCloseLastMenu();
             }
+        }
+    }
+
+    public class Person
+    {
+        public int Id { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+
+        public Person(string fname, string lname, int id)
+        {
+            FirstName = fname;
+            LastName = lname;
+            Id = id;
+        }
+
+        // Override the ToString() method so that
+        // the menu will display exactly what you
+        // want it to display.
+        public override string ToString()
+        {
+            return FirstName + " " + LastName + ", ID:" + Id;
         }
     }
 }
