@@ -1465,18 +1465,6 @@ namespace SimpleUI
         {
             if (sourceMenu.UIMenuItemList.IndexOf(this) == sourceMenu.SelectedIndex)
             {
-                if (this is UIMenuSubsectionItem)
-                {
-                    if (sourceMenu.IsHoldingUp())
-                    {
-                        sourceMenu.MoveUp();
-                    }
-                    else
-                    {
-                        sourceMenu.MoveDown();
-                    }
-                }
-
                 sourceMenu.DrawCustomText(this.Text, sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType, sourceMenu.HighlightedItemTextColor.R, sourceMenu.HighlightedItemTextColor.G, sourceMenu.HighlightedItemTextColor.B, sourceMenu.HighlightedItemTextColor.A, sourceMenu.xPosItemText, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier); //Draw highlighted item text
 
                 if (this.Value != null)
@@ -1507,7 +1495,7 @@ namespace SimpleUI
             {
                 sourceMenu.DrawCustomText(this.Text, sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType,
                     sourceMenu.DefaultTextColor.R, sourceMenu.DefaultTextColor.G, sourceMenu.DefaultTextColor.B, sourceMenu.DefaultTextColor.A,
-                    this is UIMenuSubsectionItem ? sourceMenu.xPosBG : sourceMenu.xPosItemText, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, this is UIMenuSubsectionItem ? UIMenu.TextJustification.Center : UIMenu.TextJustification.Left); //Draw item text
+                    sourceMenu.xPosItemText, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, UIMenu.TextJustification.Left); //Draw item text
 
                 if (this.Value != null)
                 { sourceMenu.DrawCustomText(Convert.ToString(this.Value), sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType, sourceMenu.DefaultTextColor.R, sourceMenu.DefaultTextColor.G, sourceMenu.DefaultTextColor.B, sourceMenu.DefaultTextColor.A, sourceMenu.xPosItemValue, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, UIMenu.TextJustification.Right); } //Draw item value
@@ -1515,10 +1503,7 @@ namespace SimpleUI
                 sourceMenu.DrawRectangle(sourceMenu.xPosBG, sourceMenu.yPosItemBG + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, sourceMenu.MenuBGWidth, sourceMenu.heightItemBG, sourceMenu.DefaultBoxColor.R, sourceMenu.DefaultBoxColor.G, sourceMenu.DefaultBoxColor.B, sourceMenu.DefaultBoxColor.A); //Draw background rectangle around item.
             }
         }
-
-        public virtual void ChangeListIndex() { }
-
-        public void Dispose()
+        public virtual void Dispose()
         {
             _submenuWithin = null;
         }
@@ -1540,24 +1525,98 @@ namespace SimpleUI
         }
     }
 
-    /*public class UIMenuListItem : UIMenuItem
+    public class UIMenuListItem : UIMenuItem
     {
-        public List<dynamic> List { get; set; }
+        private List<object> List { get; set; }
         public int SelectedIndex = 0;
 
-        public UIMenuListItem(string text, dynamic value, string description, List<dynamic> list)
+        public int IndexFromItem(object item)
+        {
+            return List.FindIndex(i => ReferenceEquals(i, item));
+        }
+
+        public object ItemFromIndex(int index)
+        {
+            return List[index];
+        }
+
+        public object CurrentListItem
+        {
+            get { return List[SelectedIndex]; }
+        }
+
+        public UIMenuListItem(string text, string description, List<object> list) : base(text, description)
         {
             this.Text = text;
-            this.Value = value;
             this.Description = description;
             List = list;
+            this.Value = "< " + List[SelectedIndex].ToString() + " >";
         }
 
-        public override void ChangeListIndex()
+        public override void Draw(UIMenu sourceMenu)
         {
-
+            if (sourceMenu.UIMenuItemList.IndexOf(this) == sourceMenu.SelectedIndex)
+            {
+                if (sourceMenu.JustPressedLeft())
+                {
+                    MovePrevious();
+                }
+                else if (sourceMenu.JustPressedRight())
+                {
+                    MoveNext();
+                }
+            }
+            base.Draw(sourceMenu);
         }
-    }*/
+
+        private void MoveNext()
+        {
+            if (SelectedIndex >= List.Count - 1)
+            {
+                SelectedIndex = 0;
+            }
+            else
+            {
+                SelectedIndex++;
+            }
+            this.Value = "< " + List[SelectedIndex].ToString() + " >";
+        }
+
+        private void MovePrevious()
+        {
+            if (SelectedIndex <= 0)
+            {
+                SelectedIndex = List.Count - 1;
+            }
+            else
+            {
+                SelectedIndex--;
+            }
+            this.Value = "< " + List[SelectedIndex].ToString() + " >";
+        }
+
+        /// <summary>
+        /// Call this after updating your List<>.
+        /// </summary>
+        public void SaveListUpdateFromOutOfBounds()
+        {
+            if (SelectedIndex < 0)
+            {
+                SelectedIndex = 0;
+            }
+            else if (SelectedIndex >= List.Count)
+            {
+                SelectedIndex = List.Count - 1;
+            }
+            this.Value = "< " + List[SelectedIndex].ToString() + " >";
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            List = null;
+        }
+    }
 
     public class UIMenuSubsectionItem : UIMenuItem
     {
@@ -1585,25 +1644,6 @@ namespace SimpleUI
                     sourceMenu.MoveDown();
                 }
 
-                /*sourceMenu.DrawCustomText(this.Text, sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType, sourceMenu.HighlightedItemTextColor.R, sourceMenu.HighlightedItemTextColor.G, sourceMenu.HighlightedItemTextColor.B, sourceMenu.HighlightedItemTextColor.A, sourceMenu.xPosItemText, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier); //Draw highlighted item text
-
-                if (this.Value != null)
-                { sourceMenu.DrawCustomText(Convert.ToString(this.Value), sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType, sourceMenu.HighlightedItemTextColor.R, sourceMenu.HighlightedItemTextColor.G, sourceMenu.HighlightedItemTextColor.B, sourceMenu.HighlightedItemTextColor.A, sourceMenu.xPosItemValue, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, UIMenu.TextJustification.Right); } //Draw highlighted item value
-
-                sourceMenu.DrawRectangle(sourceMenu.xPosBG, sourceMenu.yPosItemBG + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, sourceMenu.MenuBGWidth, sourceMenu.heightItemBG, sourceMenu.HighlightedBoxColor.R, sourceMenu.HighlightedBoxColor.G, sourceMenu.HighlightedBoxColor.B, sourceMenu.HighlightedBoxColor.A); //Draw rectangle over highlighted text
-
-                if (this.Description != null)
-                {
-                    sourceMenu.DrawCustomText(this.Description, sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType, sourceMenu.DescriptionTextColor.R, sourceMenu.DescriptionTextColor.G, sourceMenu.DescriptionTextColor.B, sourceMenu.DescriptionTextColor.A, sourceMenu.xPosItemText, sourceMenu.yPosItem + sourceMenu.YPosDescBasedOnScroll * sourceMenu.posMultiplier, UIMenu.TextJustification.Left, true); // Draw description text at bottom of menu
-                    float numLines = this.DescriptionWidth / (sourceMenu.boxWidth - 10);
-                    for (int l = 0; l < (int)Math.Ceiling(numLines); l++)
-                    {
-                        sourceMenu.DrawRectangle(sourceMenu.xPosBG, sourceMenu.yPosItemBG + (l + sourceMenu.YPosDescBasedOnScroll) * sourceMenu.posMultiplier, sourceMenu.MenuBGWidth, sourceMenu.heightItemBG, sourceMenu.DescriptionBoxColor.R, sourceMenu.DescriptionBoxColor.G, sourceMenu.DescriptionBoxColor.B, sourceMenu.DescriptionBoxColor.A); //Draw rectangle over description text at bottom of the list.
-                    }
-                }
-
-                sourceMenu.SelectedItem = this;*/
-
                 sourceMenu.DrawCustomText(this.Text, sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType,
                         sourceMenu.SubsectionDefaultTextColor.R, sourceMenu.SubsectionDefaultTextColor.G, sourceMenu.SubsectionDefaultTextColor.B, sourceMenu.SubsectionDefaultTextColor.A,
                         sourceMenu.xPosBG, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, UIMenu.TextJustification.Center); //Draw item text
@@ -1615,10 +1655,7 @@ namespace SimpleUI
                 sourceMenu.DrawCustomText(this.Text, sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType,
                     sourceMenu.SubsectionDefaultTextColor.R, sourceMenu.SubsectionDefaultTextColor.G, sourceMenu.SubsectionDefaultTextColor.B, sourceMenu.SubsectionDefaultTextColor.A,
                     sourceMenu.xPosBG, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, UIMenu.TextJustification.Center); //Draw item text
-
-                /*if (this.Value != null)
-                { sourceMenu.DrawCustomText(Convert.ToString(this.Value), sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType, sourceMenu.SubsectionDefaultTextColor.R, sourceMenu.SubsectionDefaultTextColor.G, sourceMenu.SubsectionDefaultTextColor.B, sourceMenu.SubsectionDefaultTextColor.A, sourceMenu.xPosItemValue, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, UIMenu.TextJustification.Right); } //Draw item value
-                */
+                
                 sourceMenu.DrawRectangle(sourceMenu.xPosBG, sourceMenu.yPosItemBG + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, sourceMenu.MenuBGWidth, sourceMenu.heightItemBG, sourceMenu.SubsectionDefaultBoxColor.R, sourceMenu.SubsectionDefaultBoxColor.G, sourceMenu.SubsectionDefaultBoxColor.B, sourceMenu.SubsectionDefaultBoxColor.A); //Draw background rectangle around item.
             }
         }
