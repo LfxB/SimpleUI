@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleUI", "SimpleUI\SimpleUI.csproj", "{753BAE41-2693-4B87-8AFC-5D7DE84797E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleUI", "SimpleUI.csproj", "{753BAE41-2693-4B87-8AFC-5D7DE84797E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleUI_Example", "SimpleUI_Example\SimpleUI_Example.csproj", "{A527F5B9-F6FE-4EBB-95F9-87C7DC87600A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleUI_Example", "SimpleUI_Example.csproj", "{A527F5B9-F6FE-4EBB-95F9-87C7DC87600A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
