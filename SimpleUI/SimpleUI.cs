@@ -1514,14 +1514,19 @@ namespace SimpleUI
         public UIMenuNumberValueItem(string text, dynamic value) : base(text, (object)value)
         {
             this.Text = text;
-            this.Value = "< " + value + " >";
+            SetValue(value);
         }
 
         public UIMenuNumberValueItem(string text, dynamic value, string description) : base(text, (object)value, description)
         {
             this.Text = text;
-            this.Value = "< " + value + " >";
+            SetValue(value);
             this.Description = description;
+        }
+
+        public void SetValue(dynamic value)
+        {
+            this.Value = "< " + value + " >";
         }
     }
 
