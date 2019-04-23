@@ -189,9 +189,10 @@ namespace SimpleUI
         }
     }
 
+    public delegate void MenuOpenEvent(UIMenu sender);
     public delegate void ItemHighlightEvent(UIMenu sender, UIMenuItem selectedItem, int index);
     public delegate void ItemSelectEvent(UIMenu sender, UIMenuItem selectedItem, int index);
-    public delegate void ItemLeftRightEvent(UIMenu sender, UIMenuItem selectedItem, int index, bool left);
+    public delegate void ItemLeftRightEvent(UIMenu sender, UIMenuItem selectedItem, int index, UIMenu.Direction direction);
 
     public class UIMenu
     {
@@ -221,6 +222,7 @@ namespace SimpleUI
                 if (value && !_visible)
                 {
                     SaveIndexPositionFromOutOfBounds();
+                    MenuOpen();
                 }
 
                 _visible = value;
@@ -230,6 +232,11 @@ namespace SimpleUI
         public string Title { get; set; }
 
         public bool UseEventBasedControls = true;
+
+        /// <summary>
+        /// Called when menu is opened.
+        /// </summary>
+        public event MenuOpenEvent OnMenuOpen;
 
         /// <summary>
         /// Called while item is highlighted/hovered over.
@@ -487,14 +494,7 @@ namespace SimpleUI
 
                 if (JustPressedCancel())
                 {
-                    IsVisible = false;
-
-                    if (ParentMenu != null)
-                    {
-                        ParentMenu.IsVisible = true;
-                        //ParentMenu.CancelPressed = false;
-                        //ParentMenu.InputTimer = DateTime.Now.AddMilliseconds(350);
-                    }
+                    GoBack(false);
 
                     //CancelPressed = false;
                     UIInput.InputTimer = DateTime.Now.AddMilliseconds(350);
@@ -512,13 +512,13 @@ namespace SimpleUI
 
                     if (JustPressedLeft())
                     {
-                        ItemLeftRight(SelectedItem, SelectedIndex, true);
+                        ItemLeftRight(SelectedItem, SelectedIndex, Direction.Left);
                         UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
                     }
 
                     if (JustPressedRight())
                     {
-                        ItemLeftRight(SelectedItem, SelectedIndex, false);
+                        ItemLeftRight(SelectedItem, SelectedIndex, Direction.Right);
                         UIInput.InputTimer = DateTime.Now.AddMilliseconds(UIInput.InputWait);
                     }
 
@@ -952,6 +952,19 @@ namespace SimpleUI
             return false;
         }
 
+        public void GoBack(bool withSound)
+        {
+            IsVisible = false;
+
+            if (ParentMenu != null)
+            {
+                ParentMenu.IsVisible = true;
+            }
+
+            if (withSound)
+                Game.PlaySound(AUDIO_BACK, AUDIO_LIBRARY);
+        }
+
         bool IsHoldingSpeedupControl()
         {
             if (IsGamepad())
@@ -969,6 +982,13 @@ namespace SimpleUI
             UIInput.InputTimer = DateTime.Now.AddMilliseconds(ms);
         }
 
+        public enum Direction
+        {
+            None,
+            Left,
+            Right
+        }
+
         /// <summary>
         /// Control a bool easily inside a <see cref="OnItemSelect"/> event
         /// </summary>
@@ -981,6 +1001,12 @@ namespace SimpleUI
                 boolToControl = !boolToControl;
             }
             controllingItem.Value = boolToControl;
+        }
+
+        public bool ControlBoolValue(bool boolToControl, UIMenuItem controllingItem)
+        {
+            ControlBoolValue(ref boolToControl, controllingItem);
+            return boolToControl;
         }
 
         public bool ControlBoolValue_NoEvent(UIMenuItem item, bool boolToControl)
@@ -1012,12 +1038,12 @@ namespace SimpleUI
         /// <param name="limit">Set whether you'd like to limit how high/low this float can go</param>
         /// <param name="min"></param>
         /// <param name="max"></param>
-        public void ControlFloatValue(ref float numberToControl, UIMenuItem controllingItem, bool left, float incrementValue, float incrementValueFast, int decimals = 2, bool limit = false, float min = 0f, float max = 1f)
+        public void ControlFloatValue(ref float numberToControl, UIMenuItem controllingItem, Direction direction, float incrementValue, float incrementValueFast, int decimals = 2, bool limit = false, float min = 0f, float max = 1f)
         {
             if (IsVisible && SelectedItem == controllingItem)
             {
                 float temp = numberToControl;
-                if (left)
+                if (direction == Direction.Left)
                 {
                     if (IsHoldingSpeedupControl())
                     {
@@ -1028,7 +1054,7 @@ namespace SimpleUI
                         temp -= incrementValue;
                     }
                 }
-                if (!left)
+                else if (direction == Direction.Right)
                 {
                     if (IsHoldingSpeedupControl())
                     {
@@ -1054,6 +1080,12 @@ namespace SimpleUI
                 numberToControl = (float)Math.Round(temp, decimals);
             }
             controllingItem.Value = "< " + numberToControl + " >";
+        }
+
+        public float ControlFloatValue(float numberToControl, UIMenuItem controllingItem, Direction direction, float incrementValue, float incrementValueFast, int decimals = 2, bool limit = false, float min = 0f, float max = 1f)
+        {
+            ControlFloatValue(ref numberToControl, controllingItem, direction, incrementValue, incrementValueFast, decimals, limit, min, max);
+            return numberToControl;
         }
 
         public float ControlFloatValue_NoEvent(UIMenuItem item, float numberToControl, float incrementValue, float incrementValueFast, int decimals = 2, bool limit = false, float min = 0f, float max = 1f)
@@ -1135,12 +1167,12 @@ namespace SimpleUI
         /// <param name="limit">Set whether you'd like to limit how high/low this int can go</param>
         /// <param name="min"></param>
         /// <param name="max"></param>
-        public void ControlIntValue(ref int numberToControl, UIMenuItem controllingItem, bool left, int incrementValue, int incrementValueFast, bool limit = false, int min = 0, int max = 100)
+        public void ControlIntValue(ref int numberToControl, UIMenuItem controllingItem, Direction direction, int incrementValue, int incrementValueFast, bool limit = false, int min = 0, int max = 100)
         {
             if (IsVisible && SelectedItem == controllingItem)
             {
                 int temp = numberToControl;
-                if (left)
+                if (direction == Direction.Left)
                 {
                     if (IsHoldingSpeedupControl())
                     {
@@ -1151,7 +1183,7 @@ namespace SimpleUI
                         temp -= incrementValue;
                     }
                 }
-                if (!left)
+                else if (direction == Direction.Right)
                 {
                     if (IsHoldingSpeedupControl())
                     {
@@ -1178,6 +1210,12 @@ namespace SimpleUI
 
             }
             controllingItem.Value = "< " + numberToControl + " >";
+        }
+
+        public int ControlIntValue(int numberToControl, UIMenuItem controllingItem, Direction direction, int incrementValue, int incrementValueFast, bool limit = false, int min = 0, int max = 100)
+        {
+            ControlIntValue(ref numberToControl, controllingItem, direction, incrementValue, incrementValueFast, limit, min, max);
+            return numberToControl;
         }
 
         public int ControlIntValue_NoEvent(UIMenuItem item, int numberToControl, int incrementValue, int incrementValueFast, bool limit = false, int min = 0, int max = 100)
@@ -1255,14 +1293,26 @@ namespace SimpleUI
         /// <param name="enumToControl">The Enum to control</param>
         /// <param name="controllingItem">The item that controls this enum</param>
         /// <param name="left">The direction given by the <see cref="OnItemLeftRight"/> event</param>
-        public void ControlEnumValue<T>(ref T enumToControl, UIMenuItem controllingItem, bool left) where T : struct
+        public void ControlEnumValue<T>(ref T enumToControl, UIMenuItem controllingItem, Direction direction) where T : struct
         {
             if (IsVisible && SelectedItem == controllingItem)
             {
-                enumToControl = left ? enumToControl.Previous() : enumToControl.Next();
+                if (direction == Direction.Left)
+                {
+                    enumToControl = enumToControl.Previous();
+                }
+                else if (direction == Direction.Right)
+                {
+                    enumToControl = enumToControl.Next();
+                }
             }
 
             controllingItem.Value = "< " + enumToControl.ToString() + " >";
+        }
+
+        protected virtual void MenuOpen()
+        {
+            OnMenuOpen?.Invoke(this);
         }
 
         protected virtual void ItemHighlight(UIMenuItem selecteditem, int index)
@@ -1275,9 +1325,14 @@ namespace SimpleUI
             OnItemSelect?.Invoke(this, selecteditem, index);
         }
 
-        protected virtual void ItemLeftRight(UIMenuItem selecteditem, int index, bool left)
+        protected virtual void ItemLeftRight(UIMenuItem selecteditem, int index, Direction direction)
         {
-            OnItemLeftRight?.Invoke(this, selecteditem, index, left);
+            OnItemLeftRight?.Invoke(this, selecteditem, index, direction);
+        }
+
+        public void UnsubscribeAll_OnMenuOpen()
+        {
+            OnMenuOpen = null;
         }
 
         public void UnsubscribeAll_OnItemSelect()
@@ -1289,17 +1344,16 @@ namespace SimpleUI
         public void UnsubscribeAll_OnItemLeftRight()
         {
             OnItemLeftRight = null;
-            //OnItemLeftRight = delegate { }; // Causes more overhead
         }
 
         public void UnsubscribeAll_WhileItemHighlight()
         {
             WhileItemHighlight = null;
-            //WhileItemHighlight = delegate { }; // Causes more overhead
         }
 
         public void Dispose()
         {
+            UnsubscribeAll_OnMenuOpen();
             UnsubscribeAll_OnItemSelect();
             UnsubscribeAll_OnItemLeftRight();
             UnsubscribeAll_WhileItemHighlight();
@@ -1652,7 +1706,7 @@ namespace SimpleUI
                 sourceMenu.DrawCustomText(this.Text, sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType,
                         sourceMenu.SubsectionDefaultTextColor.R, sourceMenu.SubsectionDefaultTextColor.G, sourceMenu.SubsectionDefaultTextColor.B, sourceMenu.SubsectionDefaultTextColor.A,
                         sourceMenu.xPosBG, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, UIMenu.TextJustification.Center); //Draw item text
-                
+
                 sourceMenu.DrawRectangle(sourceMenu.xPosBG, sourceMenu.yPosItemBG + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, sourceMenu.MenuBGWidth, sourceMenu.heightItemBG, sourceMenu.SubsectionDefaultBoxColor.R, sourceMenu.SubsectionDefaultBoxColor.G, sourceMenu.SubsectionDefaultBoxColor.B, sourceMenu.SubsectionDefaultBoxColor.A); //Draw background rectangle around item.
             }
             else
@@ -1660,12 +1714,12 @@ namespace SimpleUI
                 sourceMenu.DrawCustomText(this.Text, sourceMenu.ItemTextFontSize, sourceMenu.ItemTextFontType,
                     sourceMenu.SubsectionDefaultTextColor.R, sourceMenu.SubsectionDefaultTextColor.G, sourceMenu.SubsectionDefaultTextColor.B, sourceMenu.SubsectionDefaultTextColor.A,
                     sourceMenu.xPosBG, sourceMenu.yPosItem + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, UIMenu.TextJustification.Center); //Draw item text
-                
+
                 sourceMenu.DrawRectangle(sourceMenu.xPosBG, sourceMenu.yPosItemBG + sourceMenu.YPosBasedOnScroll * sourceMenu.posMultiplier, sourceMenu.MenuBGWidth, sourceMenu.heightItemBG, sourceMenu.SubsectionDefaultBoxColor.R, sourceMenu.SubsectionDefaultBoxColor.G, sourceMenu.SubsectionDefaultBoxColor.B, sourceMenu.SubsectionDefaultBoxColor.A); //Draw background rectangle around item.
             }
         }
     }
-    
+
     public static class StringHelper
     {
         public static void AddLongString(string str)

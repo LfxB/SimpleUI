@@ -109,7 +109,7 @@ namespace SimpleUIExample
             // and add it to the submenu.
             submenuItem1 = new UIMenuItem("Submenu Item 1");
             subMenu.AddMenuItem(submenuItem1);
-            
+
             // Same as above
             submenuItem2 = new UIMenuItem("Submenu Item 2");
             subMenu.AddMenuItem(submenuItem2);
@@ -240,7 +240,7 @@ namespace SimpleUIExample
                     UI.ShowSubtitle("Highlighting subMenu's Item 2");
                 }
             };
-            
+
             // Let's subscribe mainMenu's OnItemLeftRight event to the method
             // "MainMenu_OnItemLeftRight"
             // This method will then be executed whenever you press left or right
@@ -254,8 +254,8 @@ namespace SimpleUIExample
             // and Dispose methods for items and menus, allowing easy modification
             // after the initial setup. Explore using Intellisense!
         }
-        
-        private void MainMenu_OnItemLeftRight(UIMenu sender, UIMenuItem selectedItem, int index, bool left)
+
+        private void MainMenu_OnItemLeftRight(UIMenu sender, UIMenuItem selectedItem, int index, UIMenu.Direction direction)
         {
             // Check which item is selected.
             if (selectedItem == itemIntegerControl)
@@ -265,9 +265,9 @@ namespace SimpleUIExample
                 // In this example, we will control the var "testInt" with
                 // the "itemIntegerControl" menu item.
                 // The params that follow are explained with intellisense.
-                mainMenu.ControlIntValue(ref testInt, itemIntegerControl, left, 1, 5, true, 0, 100);
+                mainMenu.ControlIntValue(ref testInt, itemIntegerControl, direction, 1, 5, true, 0, 100);
 
-                UI.ShowSubtitle("You pressed " + (left ? "Left" : "Right") + " while highlighting Integer Item!");
+                UI.ShowSubtitle("You pressed " + (direction == UIMenu.Direction.Left ? "Left" : "Right") + " while highlighting Integer Item!");
             }
             else if (selectedItem == itemFloatControl)
             {
@@ -276,9 +276,9 @@ namespace SimpleUIExample
                 // In this example, we will control the var "testFloat" with
                 // the "itemFloatControl" menu item.
                 // The params that follow are explained with intellisense.
-                mainMenu.ControlFloatValue(ref testFloat, itemFloatControl, left, 0.5f, 1f, 2, true, 0f, 10f);
+                mainMenu.ControlFloatValue(ref testFloat, itemFloatControl, direction, 0.5f, 1f, 2, true, 0f, 10f);
 
-                UI.ShowSubtitle("You pressed " + (left ? "Left" : "Right") + " while highlighting Float Item!");
+                UI.ShowSubtitle("You pressed " + (direction == UIMenu.Direction.Left ? "Left" : "Right") + " while highlighting Float Item!");
             }
             else if (selectedItem == itemEnumControl)
             {
@@ -286,9 +286,9 @@ namespace SimpleUIExample
                 // a specific enum with one line of code.
                 // In this example, we will control the var "testEnum" with
                 // the "itemEnumControl" menu item.
-                mainMenu.ControlEnumValue(ref testEnum, itemEnumControl, left);
+                mainMenu.ControlEnumValue(ref testEnum, itemEnumControl, direction);
 
-                UI.ShowSubtitle("You pressed " + (left ? "Left" : "Right") + " while highlighting Enum Item!");
+                UI.ShowSubtitle("You pressed " + (direction == UIMenu.Direction.Left ? "Left" : "Right") + " while highlighting Enum Item!");
             }
             else if (selectedItem == itemListControl)
             {
