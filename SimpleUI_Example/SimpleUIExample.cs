@@ -174,7 +174,7 @@ namespace SimpleUIExample
                 // Check which item is selected.
                 if (selectedItem == itemSelectFunction)
                 {
-                    UI.ShowSubtitle("Hi! I'm testing SimpleUI's OnItemSelect event!");
+                    GTA.UI.Screen.ShowSubtitle("Hi! I'm testing SimpleUI's OnItemSelect event!");
                 }
                 else if (selectedItem == itemBoolControl)
                 {
@@ -186,13 +186,13 @@ namespace SimpleUIExample
                 }
                 else if (selectedItem == itemAddPerson)
                 {
-                    string fname = Game.GetUserInput("FirstName", 999);
+                    string fname = Game.GetUserInput("FirstName");
                     if (String.IsNullOrWhiteSpace(fname)) return;
 
-                    string lname = Game.GetUserInput("LastName", 999);
+                    string lname = Game.GetUserInput("LastName");
                     if (String.IsNullOrWhiteSpace(lname)) return;
 
-                    string input = Game.GetUserInput("ID", 999);
+                    string input = Game.GetUserInput("ID");
                     if (String.IsNullOrWhiteSpace(lname)) return;
 
                     int id;
@@ -206,13 +206,13 @@ namespace SimpleUIExample
                     // get an out of bounds error.
                     itemListControlAdvanced.SaveListUpdateFromOutOfBounds();
 
-                    UI.ShowSubtitle(fname + " " + lname + " added to list!");
+                    GTA.UI.Screen.ShowSubtitle(fname + " " + lname + " added to list!");
                 }
                 else if (selectedItem == itemRemoveLastPerson)
                 {
                     if (testListAdvanced.Count > 1)
                     {
-                        UI.ShowSubtitle(testListAdvanced[testListAdvanced.Count - 1].ToString() + " removed from list!");
+                        GTA.UI.Screen.ShowSubtitle(testListAdvanced[testListAdvanced.Count - 1].ToString() + " removed from list!");
 
                         // Don't want to use LINQ for just this one line..
                         testListAdvanced.RemoveAt(testListAdvanced.Count - 1);
@@ -221,7 +221,7 @@ namespace SimpleUIExample
                     }
                     else
                     {
-                        UI.ShowSubtitle("There is only one person left!");
+                        GTA.UI.Screen.ShowSubtitle("There is only one person left!");
                     }
                 }
             };
@@ -233,11 +233,11 @@ namespace SimpleUIExample
                 // Check which item is selected.
                 if (selectedItem == submenuItem1)
                 {
-                    UI.ShowSubtitle("Highlighting subMenu's Item 1");
+                    GTA.UI.Screen.ShowSubtitle("Highlighting subMenu's Item 1");
                 }
                 else if (selectedItem == submenuItem2)
                 {
-                    UI.ShowSubtitle("Highlighting subMenu's Item 2");
+                    GTA.UI.Screen.ShowSubtitle("Highlighting subMenu's Item 2");
                 }
             };
 
@@ -267,7 +267,7 @@ namespace SimpleUIExample
                 // The params that follow are explained with intellisense.
                 mainMenu.ControlIntValue(ref testInt, itemIntegerControl, direction, 1, 5, true, 0, 100);
 
-                UI.ShowSubtitle("You pressed " + (direction == UIMenu.Direction.Left ? "Left" : "Right") + " while highlighting Integer Item!");
+                GTA.UI.Screen.ShowSubtitle("You pressed " + (direction == UIMenu.Direction.Left ? "Left" : "Right") + " while highlighting Integer Item!");
             }
             else if (selectedItem == itemFloatControl)
             {
@@ -278,7 +278,7 @@ namespace SimpleUIExample
                 // The params that follow are explained with intellisense.
                 mainMenu.ControlFloatValue(ref testFloat, itemFloatControl, direction, 0.5f, 1f, 2, true, 0f, 10f);
 
-                UI.ShowSubtitle("You pressed " + (direction == UIMenu.Direction.Left ? "Left" : "Right") + " while highlighting Float Item!");
+                GTA.UI.Screen.ShowSubtitle("You pressed " + (direction == UIMenu.Direction.Left ? "Left" : "Right") + " while highlighting Float Item!");
             }
             else if (selectedItem == itemEnumControl)
             {
@@ -288,19 +288,19 @@ namespace SimpleUIExample
                 // the "itemEnumControl" menu item.
                 mainMenu.ControlEnumValue(ref testEnum, itemEnumControl, direction);
 
-                UI.ShowSubtitle("You pressed " + (direction == UIMenu.Direction.Left ? "Left" : "Right") + " while highlighting Enum Item!");
+                GTA.UI.Screen.ShowSubtitle("You pressed " + (direction == UIMenu.Direction.Left ? "Left" : "Right") + " while highlighting Enum Item!");
             }
             else if (selectedItem == itemListControl)
             {
                 // An item of type UIMenuListItem is automatically controlled by the menu.
-                UI.ShowSubtitle("\"" + itemListControl.CurrentListItem.ToString() + "\" is selected.");
+                GTA.UI.Screen.ShowSubtitle("\"" + itemListControl.CurrentListItem.ToString() + "\" is selected.");
             }
             else if (selectedItem == itemListControlAdvanced)
             {
                 // UIMenuListItem.CurrentListItem will return the actual selected object
                 // in the list. You must cast it to the actual object type. Ex:
                 // Person p = (Person)list.CurrentListItem;
-                UI.ShowSubtitle("\"" + itemListControlAdvanced.CurrentListItem.ToString() + "\" is selected.");
+                GTA.UI.Screen.ShowSubtitle("\"" + itemListControlAdvanced.CurrentListItem.ToString() + "\" is selected.");
             }
         }
 

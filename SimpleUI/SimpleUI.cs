@@ -12,6 +12,32 @@ using Control = GTA.Control;
 
 namespace SimpleUI
 {
+
+    public enum Font
+    {
+        ChaletLondon,
+        HouseScript,
+        Monospace,
+        ChaletComprimeCologne = 4,
+        Pricedown = 7,
+    }
+
+    public class SimpleScreen
+    {
+        /// <summary>
+        /// Gets the ScreenResolution.
+        /// </summary>
+        public static Size ScreenResolution
+        {
+            get
+            {
+                int w, h;
+                unsafe { Function.Call(Hash.GET_SCREEN_RESOLUTION, &w, &h); }
+                return new Size(w, h);
+            }
+        }
+    }
+
     public class MenuPool
     {
         List<UIMenu> _menuList = new List<UIMenu>();
@@ -291,7 +317,7 @@ namespace SimpleUI
         internal float posMultiplier;
 
         internal float ItemTextFontSize;
-        internal GTA.Font ItemTextFontType;
+        internal Font ItemTextFontType;
         internal float xPosItemText;
         internal float xPosRightEndOfMenu;
         internal float xPosItemValue;
@@ -331,7 +357,7 @@ namespace SimpleUI
 
             TitleFontSize = 0.9f; //TitleFont = 1.1f; for no-value fit.
             ItemTextFontSize = 0.452f;
-            ItemTextFontType = GTA.Font.ChaletComprimeCologne;
+            ItemTextFontType = Font.ChaletComprimeCologne;
 
             CalculateMenuPositioning();
 
@@ -345,7 +371,7 @@ namespace SimpleUI
                 if (e.KeyCode == Keys.NumPad5 || e.KeyCode == Keys.Enter)
                 {
                     AcceptPressed = true;
-                    UI.ShowSubtitle("HI");
+                    GTA.UI.Notification.Show("HI");
                 }
 
                 if (e.KeyCode == Keys.NumPad0 || e.KeyCode == Keys.Back)
@@ -358,7 +384,7 @@ namespace SimpleUI
         public virtual void CalculateMenuPositioning()
         {
             const float height = 1080f;
-            float ratio = (float)Game.ScreenResolution.Width / Game.ScreenResolution.Height;
+            float ratio = (float)SimpleScreen.ScreenResolution.Width / SimpleScreen.ScreenResolution.Height;
             var width = height * ratio;
 
             TitleBGHeight = boxTitleHeight / height; //0.046f
@@ -455,7 +481,7 @@ namespace SimpleUI
         {
             if (IsVisible)
             {
-                /*UI.ShowSubtitle("selectedIndex: " + SelectedIndex
+                /*GTA.UI.Notification.Show("selectedIndex: " + SelectedIndex
                     + "\nminItem: " + minItem
                     + "\nmaxItem: " + maxItem
                     + "\nitemListCount: " + _itemList.Count
@@ -469,7 +495,7 @@ namespace SimpleUI
                 {
                     SelectedItem.ChangeListIndex();
                 }*/
-                //UI.ShowSubtitle("selectedIndex: " + SelectedIndex + ", minItem: " + minItem + ", maxItem: " + maxItem); //Debug
+                //GTA.UI.Notification.Show("selectedIndex: " + SelectedIndex + ", minItem: " + minItem + ", maxItem: " + maxItem); //Debug
 
                 if (/*BindingMenuItem != null && NextMenu != null*/ _bindedList.Count > 0)
                 {
@@ -530,7 +556,7 @@ namespace SimpleUI
 
         protected void DisplayMenu()
         {
-            DrawCustomText(Title, TitleFontSize, GTA.Font.HouseScript, TitleColor.R, TitleColor.G, TitleColor.B, TitleColor.A, xPosBG, yPosTitleText, TextJustification.Center); //Draw title text
+            DrawCustomText(Title, TitleFontSize, Font.HouseScript, TitleColor.R, TitleColor.G, TitleColor.B, TitleColor.A, xPosBG, yPosTitleText, TextJustification.Center); //Draw title text
             DrawRectangle(xPosBG, yPosTitleBG, MenuBGWidth, TitleBGHeight, TitleBackgroundColor.R, TitleBackgroundColor.G, TitleBackgroundColor.B, TitleBackgroundColor.A); //Draw main rectangle
             DrawRectangle(xPosBG, yPosUnderline, MenuBGWidth, UnderlineHeight, TitleUnderlineColor.R, TitleUnderlineColor.G, TitleUnderlineColor.B, TitleUnderlineColor.A); //Draw rectangle as underline of title
 
@@ -634,9 +660,9 @@ namespace SimpleUI
             Right //requires SET_TEXT_WRAP
         }
 
-        internal void DrawCustomText(string Message, float FontSize, GTA.Font FontType, int Red, int Green, int Blue, int Alpha, float XPos, float YPos, TextJustification justifyType = TextJustification.Left, bool ForceTextWrap = false)
+        internal void DrawCustomText(string Message, float FontSize, Font FontType, int Red, int Green, int Blue, int Alpha, float XPos, float YPos, TextJustification justifyType = TextJustification.Left, bool ForceTextWrap = false)
         {
-            Function.Call(Hash._SET_TEXT_ENTRY, "jamyfafi"); //Required, don't change this! AKA BEGIN_TEXT_COMMAND_DISPLAY_TEXT
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "jamyfafi"); //Required
             Function.Call(Hash.SET_TEXT_SCALE, 1.0f, FontSize);
             Function.Call(Hash.SET_TEXT_FONT, (int)FontType);
             Function.Call(Hash.SET_TEXT_COLOUR, Red, Green, Blue, Alpha);
@@ -650,7 +676,7 @@ namespace SimpleUI
             //Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, Message);
             StringHelper.AddLongString(Message);
 
-            Function.Call(Hash._DRAW_TEXT, XPos, YPos); //AKA END_TEXT_COMMAND_DISPLAY_TEXT
+            Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, XPos, YPos);
         }
 
         internal void DrawRectangle(float BgXpos, float BgYpos, float BgWidth, float BgHeight, int bgR, int bgG, int bgB, int bgA)
@@ -824,11 +850,11 @@ namespace SimpleUI
 
         protected void DisableControls()
         {
-            Game.DisableAllControlsThisFrame(2);
+            Game.DisableAllControlsThisFrame();
 
             foreach (var con in ControlsToEnable)
             {
-                Game.EnableControlThisFrame(2, con);
+                Game.EnableControlThisFrame(con);
 
 
 
@@ -837,12 +863,12 @@ namespace SimpleUI
 
         bool IsGamepad()
         {
-            return Game.CurrentInputMode == InputMode.GamePad;
+            return Game.LastInputMethod == InputMethod.GamePad;
         }
 
         internal bool IsHoldingUp()
         {
-            return (IsGamepad() && Game.IsControlPressed(2, Control.PhoneUp)) || Game.IsKeyPressed(Keys.NumPad8) || Game.IsKeyPressed(Keys.Up);
+            return (IsGamepad() && Game.IsControlPressed(Control.PhoneUp)) || Game.IsKeyPressed(Keys.NumPad8) || Game.IsKeyPressed(Keys.Up);
         }
 
         public bool JustPressedUp()
@@ -851,7 +877,7 @@ namespace SimpleUI
             {
                 if (UIInput.InputTimer < DateTime.Now)
                 {
-                    Game.PlaySound(AUDIO_UPDOWN, AUDIO_LIBRARY);
+                    Audio.ReleaseSound(Audio.PlaySoundFrontend(AUDIO_UPDOWN, AUDIO_LIBRARY));
                     return true;
                 }
             }
@@ -860,7 +886,7 @@ namespace SimpleUI
 
         bool IsHoldingDown()
         {
-            return (IsGamepad() && Game.IsControlPressed(2, Control.PhoneDown)) || Game.IsKeyPressed(Keys.NumPad2) || Game.IsKeyPressed(Keys.Down);
+            return (IsGamepad() && Game.IsControlPressed(Control.PhoneDown)) || Game.IsKeyPressed(Keys.NumPad2) || Game.IsKeyPressed(Keys.Down);
         }
 
         public bool JustPressedDown()
@@ -869,7 +895,7 @@ namespace SimpleUI
             {
                 if (UIInput.InputTimer < DateTime.Now)
                 {
-                    Game.PlaySound(AUDIO_UPDOWN, AUDIO_LIBRARY);
+                    Audio.ReleaseSound(Audio.PlaySoundFrontend(AUDIO_UPDOWN, AUDIO_LIBRARY));
                     return true;
                 }
             }
@@ -878,11 +904,11 @@ namespace SimpleUI
 
         public bool JustPressedLeft()
         {
-            if ((IsGamepad() && Game.IsControlPressed(2, Control.PhoneLeft)) || Game.IsKeyPressed(Keys.NumPad4) || Game.IsKeyPressed(Keys.Left))
+            if ((IsGamepad() && Game.IsControlPressed(Control.PhoneLeft)) || Game.IsKeyPressed(Keys.NumPad4) || Game.IsKeyPressed(Keys.Left))
             {
                 if (UIInput.InputTimer < DateTime.Now)
                 {
-                    Game.PlaySound(AUDIO_LEFTRIGHT, AUDIO_LIBRARY);
+                    Audio.ReleaseSound(Audio.PlaySoundFrontend(AUDIO_UPDOWN, AUDIO_LIBRARY));
                     return true;
                 }
             }
@@ -891,11 +917,11 @@ namespace SimpleUI
 
         public bool JustPressedRight()
         {
-            if ((IsGamepad() && Game.IsControlPressed(2, Control.PhoneRight)) || Game.IsKeyPressed(Keys.NumPad6) || Game.IsKeyPressed(Keys.Right))
+            if ((IsGamepad() && Game.IsControlPressed(Control.PhoneRight)) || Game.IsKeyPressed(Keys.NumPad6) || Game.IsKeyPressed(Keys.Right))
             {
                 if (UIInput.InputTimer < DateTime.Now)
                 {
-                    Game.PlaySound(AUDIO_LEFTRIGHT, AUDIO_LIBRARY);
+                    Audio.ReleaseSound(Audio.PlaySoundFrontend(AUDIO_UPDOWN, AUDIO_LIBRARY));
                     return true;
                 }
             }
@@ -906,7 +932,7 @@ namespace SimpleUI
         {
             if ((IsGamepad() && Game.IsControlJustPressed(2, Control.PhoneSelect)) || AcceptPressed)
             {
-                Game.PlaySound(AUDIO_SELECT, AUDIO_LIBRARY);
+                Audio.ReleaseSound(Audio.PlaySoundFrontend(AUDIO_SELECT, AUDIO_LIBRARY);
                 //AcceptPressed = false;
                 return true;
             }
@@ -917,7 +943,7 @@ namespace SimpleUI
         {
             if ((IsGamepad() && Game.IsControlJustPressed(2, Control.PhoneCancel)) || CancelPressed)
             {
-                Game.PlaySound(AUDIO_BACK, AUDIO_LIBRARY);
+                Audio.ReleaseSound(Audio.PlaySoundFrontend(AUDIO_BACK, AUDIO_LIBRARY);
                 //CancelPressed = false;
                 return true;
             }
@@ -926,11 +952,11 @@ namespace SimpleUI
 
         public bool JustPressedAccept()
         {
-            if (Game.IsControlPressed(2, Control.PhoneSelect) || Game.IsKeyPressed(Keys.NumPad5) || Game.IsKeyPressed(Keys.Enter))
+            if (Game.IsControlPressed(Control.PhoneSelect) || Game.IsKeyPressed(Keys.NumPad5) || Game.IsKeyPressed(Keys.Enter))
             {
                 if (UIInput.InputTimer < DateTime.Now)
                 {
-                    Game.PlaySound(AUDIO_SELECT, AUDIO_LIBRARY);
+                    Audio.ReleaseSound(Audio.PlaySoundFrontend(AUDIO_SELECT, AUDIO_LIBRARY));
                     //InputTimer = Game.GameTime + 350;
                     return true;
                 }
@@ -940,11 +966,11 @@ namespace SimpleUI
 
         public bool JustPressedCancel()
         {
-            if (Game.IsControlPressed(2, Control.PhoneCancel) || Game.IsKeyPressed(Keys.NumPad0) || Game.IsKeyPressed(Keys.Back))
+            if (Game.IsControlPressed(Control.PhoneCancel) || Game.IsKeyPressed(Keys.NumPad0) || Game.IsKeyPressed(Keys.Back))
             {
                 if (UIInput.InputTimer < DateTime.Now)
                 {
-                    Game.PlaySound(AUDIO_BACK, AUDIO_LIBRARY);
+                    Audio.ReleaseSound(Audio.PlaySoundFrontend(AUDIO_BACK, AUDIO_LIBRARY));
                     //InputTimer = Game.GameTime + InputWait;
                     return true;
                 }
@@ -962,14 +988,14 @@ namespace SimpleUI
             }
 
             if (withSound)
-                Game.PlaySound(AUDIO_BACK, AUDIO_LIBRARY);
+                Audio.ReleaseSound(Audio.PlaySoundFrontend(AUDIO_BACK, AUDIO_LIBRARY));
         }
 
         bool IsHoldingSpeedupControl()
         {
             if (IsGamepad())
             {
-                return Game.IsControlPressed(2, Control.VehicleHandbrake);
+                return Game.IsControlPressed(Control.VehicleHandbrake);
             }
             else
             {
@@ -1494,7 +1520,7 @@ namespace SimpleUI
             set
             {
                 if (value != null)
-                { DescriptionWidth = StringHelper.MeasureStringWidth(value, GTA.Font.ChaletComprimeCologne, 0.452f); }
+                { DescriptionWidth = StringHelper.MeasureStringWidth(value, Font.ChaletComprimeCologne, 0.452f); }
 
                 _description = value;
             }
@@ -1540,7 +1566,7 @@ namespace SimpleUI
                     {
                         sourceMenu.DrawRectangle(sourceMenu.xPosBG, sourceMenu.yPosItemBG + (l + sourceMenu.YPosDescBasedOnScroll) * sourceMenu.posMultiplier, sourceMenu.MenuBGWidth, sourceMenu.heightItemBG, sourceMenu.DescriptionBoxColor.R, sourceMenu.DescriptionBoxColor.G, sourceMenu.DescriptionBoxColor.B, sourceMenu.DescriptionBoxColor.A); //Draw rectangle over description text at bottom of the list.
                     }
-                    //UI.ShowSubtitle(numLines.ToString());
+                    //GTA.UI.Notification.Show(numLines.ToString());
                 }
 
                 sourceMenu.SelectedItem = this;
@@ -1728,27 +1754,27 @@ namespace SimpleUI
             for (int i = 0; i < str.Length; i += strLen)
             {
                 string substr = str.Substring(i, Math.Min(strLen, str.Length - i));
-                Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, substr); //ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME
+                Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, substr);
             }
         }
 
-        public static float MeasureStringWidth(string str, GTA.Font font, float fontsize)
+        public static float MeasureStringWidth(string str, Font font, float fontsize)
         {
-            //int screenw = 2560;// Game.ScreenResolution.Width;
-            //int screenh = 1440;// Game.ScreenResolution.Height;
+            //int screenw = 2560;// SimpleScreen.ScreenResolution.Width;
+            //int screenh = 1440;// SimpleScreen.ScreenResolution.Height;
             const float height = 1080f;
-            float ratio = (float)Game.ScreenResolution.Width / Game.ScreenResolution.Height;
+            float ratio = (float)SimpleScreen.ScreenResolution.Width / SimpleScreen.ScreenResolution.Height;
             float width = height * ratio;
             return MeasureStringWidthNoConvert(str, font, fontsize) * width;
         }
 
-        private static float MeasureStringWidthNoConvert(string str, GTA.Font font, float fontsize)
+        private static float MeasureStringWidthNoConvert(string str, Font font, float fontsize)
         {
             Function.Call((Hash)0x54CE8AC98E120CAB, "jamyfafi"); //_BEGIN_TEXT_COMMAND_WIDTH
             AddLongString(str);
             Function.Call(Hash.SET_TEXT_FONT, (int)font);
             Function.Call(Hash.SET_TEXT_SCALE, fontsize, fontsize);
-            return Function.Call<float>(Hash._0x85F061DA64ED2F67, true); //_END_TEXT_COMMAND_GET_WIDTH //Function.Call<float>((Hash)0x85F061DA64ED2F67, (int)font) * fontsize; //_END_TEXT_COMMAND_GET_WIDTH
+            return Function.Call<float>(Hash._END_TEXT_COMMAND_GET_WIDTH, true);
         }
     }
 
