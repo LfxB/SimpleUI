@@ -1774,7 +1774,7 @@ namespace SimpleUI
             AddLongString(str);
             Function.Call(Hash.SET_TEXT_FONT, (int)font);
             Function.Call(Hash.SET_TEXT_SCALE, fontsize, fontsize);
-            return Function.Call<float>(Hash._END_TEXT_COMMAND_GET_WIDTH, true);
+            return Function.Call<float>(Hash.END_TEXT_COMMAND_GET_SCREEN_WIDTH_OF_DISPLAY_TEXT, true);
         }
     }
 
@@ -1799,7 +1799,7 @@ namespace SimpleUI
     internal static class UIInput
     {
         internal static DateTime InputTimer;
-        internal static int InputWait = 80;
+        internal static int InputWait = 180;
     }
 
     /*public static class SplitStringByLength
@@ -1817,13 +1817,13 @@ namespace SimpleUI
     public static class StringExtensions
     {
 
-        /// <summary>Use this function like string.Split but instead of a character to split on, 
+        /// <summary>Use this function like string.Split but instead of a character to split on,
         /// use a maximum line width size. This is similar to a Word Wrap where no words will be split.</summary>
         /// Note if the a word is longer than the maxcharactes it will be trimmed from the start.
         /// <param name="initial">The string to parse.</param>
         /// <param name="MaxCharacters">The maximum size.</param>
         /// <remarks>This function will remove some white space at the end of a line, but allow for a blank line.</remarks>
-        /// 
+        ///
         /// <returns>An array of strings.</returns>
         public static List<string> SplitOn(this string initial, int MaxCharacters)
         {
