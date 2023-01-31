@@ -44,6 +44,43 @@ namespace SimpleUI
         public UIMenu LastUsedMenu { get; set; }
 
         /// <summary>
+        /// Called when main menu is closed.
+        /// </summary>
+        public event MainMenuEnterEvent OnMainMenuEnter;
+
+        /// <summary>
+        /// Called when main menu is closed.
+        /// </summary>
+        public event MainMenuQuitEvent OnMainMenuQuit;
+
+        public delegate void MainMenuEnterEvent();
+        public delegate void MainMenuQuitEvent();
+
+        protected virtual void MainMenuEnter()
+        {
+            OnMainMenuEnter?.Invoke();
+            //GTA.UI.Notification.Show("MainMenuEnter", true);
+        }
+
+        protected virtual void MainMenuQuit()
+        {
+            OnMainMenuQuit?.Invoke();
+            //GTA.UI.Notification.Show("MainMenuQuit", true);
+        }
+
+        public void UnsubscribeAll_OnMenuEnter()
+        {
+            OnMainMenuEnter = null;
+        }
+
+        public void UnsubscribeAll_OnMenuQuit()
+        {
+            OnMainMenuQuit = null;
+        }
+
+
+
+        /// <summary>
         /// Disable this before editing the menu so that the pool will stop iterating over the menus and not crash.
         /// </summary>
         private static bool AllowMenuDraw = true;
@@ -195,6 +232,8 @@ namespace SimpleUI
             {
                 menu.IsVisible = false;
             }
+
+            MainMenuQuit();
         }
 
         public void RemoveAllMenus()
@@ -212,10 +251,14 @@ namespace SimpleUI
             {
                 this.LastUsedMenu.IsVisible = !this.LastUsedMenu.IsVisible;
             }
+
+            if (this.LastUsedMenu.IsVisible)
+                this.MainMenuEnter();
         }
     }
 
     public delegate void MenuOpenEvent(UIMenu sender);
+    public delegate void MenuExitEvent(UIMenu sender);
     public delegate void ItemHighlightEvent(UIMenu sender, UIMenuItem selectedItem, int index);
     public delegate void ItemSelectEvent(UIMenu sender, UIMenuItem selectedItem, int index);
     public delegate void ItemLeftRightEvent(UIMenu sender, UIMenuItem selectedItem, int index, UIMenu.Direction direction);
@@ -251,6 +294,11 @@ namespace SimpleUI
                     MenuOpen();
                 }
 
+                if (!value && _visible)
+                {
+                    MenuExit();
+                }
+
                 _visible = value;
             }
         }
@@ -263,6 +311,11 @@ namespace SimpleUI
         /// Called when menu is opened.
         /// </summary>
         public event MenuOpenEvent OnMenuOpen;
+
+        /// <summary>
+        /// Called when menu is closed.
+        /// </summary>
+        public event MenuExitEvent OnMenuExit;
 
         /// <summary>
         /// Called while item is highlighted/hovered over.
@@ -1341,6 +1394,11 @@ namespace SimpleUI
             OnMenuOpen?.Invoke(this);
         }
 
+        protected virtual void MenuExit()
+        {
+            OnMenuExit?.Invoke(this);
+        }
+
         protected virtual void ItemHighlight(UIMenuItem selecteditem, int index)
         {
             WhileItemHighlight?.Invoke(this, selecteditem, index);
@@ -1359,6 +1417,11 @@ namespace SimpleUI
         public void UnsubscribeAll_OnMenuOpen()
         {
             OnMenuOpen = null;
+        }
+
+        public void UnsubscribeAll_OnMenuExit()
+        {
+            OnMenuExit = null;
         }
 
         public void UnsubscribeAll_OnItemSelect()
@@ -1380,6 +1443,7 @@ namespace SimpleUI
         public void Dispose()
         {
             UnsubscribeAll_OnMenuOpen();
+            UnsubscribeAll_OnMenuExit();
             UnsubscribeAll_OnItemSelect();
             UnsubscribeAll_OnItemLeftRight();
             UnsubscribeAll_WhileItemHighlight();
@@ -1774,7 +1838,7 @@ namespace SimpleUI
             AddLongString(str);
             Function.Call(Hash.SET_TEXT_FONT, (int)font);
             Function.Call(Hash.SET_TEXT_SCALE, fontsize, fontsize);
-            return Function.Call<float>(Hash._END_TEXT_COMMAND_GET_WIDTH, true);
+            return Function.Call<float>(Hash.END_TEXT_COMMAND_GET_SCREEN_WIDTH_OF_DISPLAY_TEXT, true);
         }
     }
 
@@ -1799,7 +1863,7 @@ namespace SimpleUI
     internal static class UIInput
     {
         internal static DateTime InputTimer;
-        internal static int InputWait = 80;
+        internal static int InputWait = 180;
     }
 
     /*public static class SplitStringByLength
@@ -1817,13 +1881,13 @@ namespace SimpleUI
     public static class StringExtensions
     {
 
-        /// <summary>Use this function like string.Split but instead of a character to split on, 
+        /// <summary>Use this function like string.Split but instead of a character to split on,
         /// use a maximum line width size. This is similar to a Word Wrap where no words will be split.</summary>
         /// Note if the a word is longer than the maxcharactes it will be trimmed from the start.
         /// <param name="initial">The string to parse.</param>
         /// <param name="MaxCharacters">The maximum size.</param>
         /// <remarks>This function will remove some white space at the end of a line, but allow for a blank line.</remarks>
-        /// 
+        ///
         /// <returns>An array of strings.</returns>
         public static List<string> SplitOn(this string initial, int MaxCharacters)
         {
@@ -1864,3 +1928,4 @@ namespace SimpleUI
         }
     }
 }
+
