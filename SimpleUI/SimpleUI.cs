@@ -828,6 +828,14 @@ namespace SimpleUI
             }
         }
 
+        public void DisableAllItems()
+        {
+            _itemList.ForEach(i => _disabledItems.Add(i));
+            _itemList.Clear();
+            //SortMenuItemsByOriginalOrder();
+            SaveIndexPositionFromOutOfBounds();
+        }
+
         public void ReenableItem(UIMenuItem itemToEnable)
         {
             if (_disabledItems.Contains(itemToEnable))
@@ -846,6 +854,20 @@ namespace SimpleUI
             //SortMenuItemsByOriginalOrder();
             _disabledItems.Clear();
             SaveIndexPositionFromOutOfBounds();
+        }
+
+        public void SetEnabledItem(UIMenuItem item, bool enable)
+        {
+            if (enable)
+            {
+                if (_disabledItems.Contains(item))
+                    ReenableItem(item);
+            }
+            else
+            {
+                if (_itemList.Contains(item))
+                    DisableItem(item);
+            }
         }
 
         public void ResetOriginalOrder()
